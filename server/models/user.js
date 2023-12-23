@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
         trim: true,
         required: true,
         max: 100,
+        unique: true,
         lowecase: true
     },
     password: {
@@ -56,11 +57,24 @@ userSchema.virtual('password')
 
 // methods 
 userSchema.methods = {
-    encryptPassword: function(password){
-        if(!password) return ''
+    authenticate: function (plainText) {
+        return this.encryptPassword(plainText) === this.hashed_password
+    },
+    encryptPassword: function (password) {
+        if (!password) return ''
 
-        try{
-            
+        try {
+            return crypto.createHmac('sha1', this.salt)
+                .update(password)
+                .digest('hex')
+        } catch (err) {
+            return ''
         }
+    },
+    makeSalt: function () {
+        return Math.round(new Date().valueof() * Math.random()) + ""
     }
-}
+
+};
+
+module.exports = mongoose.model('User', userSchema);
